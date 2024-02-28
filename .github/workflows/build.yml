@@ -14,47 +14,32 @@ env:
 
 jobs:
 
-  build-linux-armv7:
-    runs-on: [self-hosted, linux, arm]
-    steps:
-    - name: Setup python
-      run: |
-        pyenv global system
-        python --version
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test
-
-
-
-  build-linux-cross:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [ armv7-musleabihf ]
-    container:
-      image: docker://benfred/rust-musl-cross:${{ matrix.target }}
-      env:
-        RUSTUP_HOME: /root/.rustup
-        CARGO_HOME: /root/.cargo
-    steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: |
-        python3 -m pip install --upgrade maturin
-        maturin build --release -o dist --target $RUST_MUSL_CROSS_TARGET
-        maturin sdist -o dist
-    - name: Rename Wheels
-      run: |
-        python3 -c "import shutil; import glob; wheels = glob.glob('dist/*.whl'); [shutil.move(wheel, wheel.replace('py3', 'py2.py3')) for wheel in wheels if 'py2' not in wheel]"
-    - name: Upload wheels
-      uses: actions/upload-artifact@v3
-      with:
-        name: wheels
-        path: dist
+  # build-linux-cross:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       target: [ armv7-musleabihf ]
+  #   container:
+  #     image: docker://benfred/rust-musl-cross:${{ matrix.target }}
+  #     env:
+  #       RUSTUP_HOME: /root/.rustup
+  #       CARGO_HOME: /root/.cargo
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Build
+  #     run: |
+  #       python3 -m pip install --upgrade maturin
+  #       maturin build --release -o dist --target $RUST_MUSL_CROSS_TARGET
+  #       maturin sdist -o dist
+  #   - name: Rename Wheels
+  #     run: |
+  #       python3 -c "import shutil; import glob; wheels = glob.glob('dist/*.whl'); [shutil.move(wheel, wheel.replace('py3', 'py2.py3')) for wheel in wheels if 'py2' not in wheel]"
+  #   - name: Upload wheels
+  #     uses: actions/upload-artifact@v3
+  #     with:
+  #       name: wheels
+  #       path: dist
 
 
   release:
@@ -71,22 +56,4 @@ jobs:
         env:
           GHR_PATH: .
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Dependencies
-        run: sudo apt install libunwind-dev
-        if: runner.os == 'Linux'
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-      - name: Push to PyPi
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          pip install --upgrade wheel pip setuptools twine
-          twine upload *
-          rm *
-      - uses: actions/checkout@v3
-      - name: Push to crates.io
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish
+
