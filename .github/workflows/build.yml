@@ -14,39 +14,39 @@ env:
 
 jobs:
 
-  # build-linux-cross:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       target: [ armv7-musleabihf ]
-  #   container:
-  #     image: docker://benfred/rust-musl-cross:${{ matrix.target }}
-  #     env:
-  #       RUSTUP_HOME: /root/.rustup
-  #       CARGO_HOME: /root/.cargo
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - name: Build
-  #     run: |
-  #       python3 -m pip install --upgrade maturin
-  #       maturin build --release -o dist --target $RUST_MUSL_CROSS_TARGET
-  #       maturin sdist -o dist
-  #   - name: Rename Wheels
-  #     run: |
-  #       python3 -c "import shutil; import glob; wheels = glob.glob('dist/*.whl'); [shutil.move(wheel, wheel.replace('py3', 'py2.py3')) for wheel in wheels if 'py2' not in wheel]"
-  #   - name: Upload wheels
-  #     uses: actions/upload-artifact@v3
-  #     with:
-  #       name: wheels
-  #       path: dist
+  build-linux-cross:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ armv7-musleabihf ]
+    container:
+      image: docker://benfred/rust-musl-cross:${{ matrix.target }}
+      env:
+        RUSTUP_HOME: /root/.rustup
+        CARGO_HOME: /root/.cargo
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: |
+        python3 -m pip install --upgrade maturin
+        maturin build --release -o dist --target $RUST_MUSL_CROSS_TARGET
+        maturin sdist -o dist
+    - name: Rename Wheels
+      run: |
+        python3 -c "import shutil; import glob; wheels = glob.glob('dist/*.whl'); [shutil.move(wheel, wheel.replace('py3', 'py2.py3')) for wheel in wheels if 'py2' not in wheel]"
+    - name: Upload wheels
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: dist
 
 
   release:
     name: Release
     runs-on: ubuntu-latest
     # if: "startsWith(github.ref, 'refs/tags/')"
-    # needs: [build-linux-cross]
+    needs: [build-linux-cross]
     steps:
       - uses: actions/download-artifact@v3
         with:
